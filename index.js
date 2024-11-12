@@ -84,6 +84,7 @@ app.get('/callback', (req, res) => {
 // New Google OAuth callback endpoint
 app.get('/google-callback', (req, res) => {
   const code = req.query.code;
+  const state = req.query.state;  // Get the state parameter
   
   res.setHeader('Content-Type', 'text/html');
   res.send(`
@@ -108,27 +109,22 @@ app.get('/google-callback', (req, res) => {
           border: 1px solid #ddd;
           word-break: break-all;
         }
-        .copy-button {
-          background: #4285f4;
-          color: white;
-          border: none;
-          padding: 10px 20px;
-          border-radius: 20px;
-          cursor: pointer;
-          font-weight: bold;
-        }
-        .copy-button:hover {
-          background: #5294ff;
-        }
       </style>
     </head>
     <body>
       <h2>Authentication Successful! ✅</h2>
       <p>Please copy this URL and paste it back in the main window:</p>
       <div class="code-box" id="codeUrl">
-        https://auth-handler-xfgq.onrender.com/google-callback?code=${code}
+        https://auth-handler-xfgq.onrender.com/google-callback?code=${code}&state=${state}
       </div>
-      <button class="copy-button" onclick="copyToClipboard()">
+      <button onclick="copyToClipboard()" style="
+        background: #4285f4;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-weight: bold;">
         Copy to Clipboard
       </button>
 
@@ -136,31 +132,15 @@ app.get('/google-callback', (req, res) => {
         function copyToClipboard() {
           const url = document.getElementById('codeUrl').innerText;
           navigator.clipboard.writeText(url).then(() => {
-            const button = document.querySelector('.copy-button');
+            const button = document.querySelector('button');
             button.textContent = 'Copied!';
             setTimeout(() => {
               button.textContent = 'Copy to Clipboard';
             }, 2000);
           });
         }
-
-        try {
-          if (window.opener) {
-            window.opener.postMessage({
-              type: 'GOOGLE_AUTH',
-              code: '${code}'
-            }, '*');
-            setTimeout(() => window.close(), 1000);
-          }
-        } catch (e) {
-          console.error('Error posting message:', e);
-        }
       </script>
     </body>
     </html>
   `);
-});
-
-app.listen(port, () => {
-  console.log(`Auth server running on port ${port}`);
 });
