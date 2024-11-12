@@ -144,3 +144,7 @@ app.get('/google-callback', (req, res) => {
     </html>
   `);
 });
+
+app.listen(port, () => {
+  console.log(`Server listening on port ${port}`);
+});
