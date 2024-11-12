@@ -5,13 +5,18 @@ const port = process.env.PORT || 3000;
 app.get('/callback', (req, res) => {
   const code = req.query.code;
   
+  // Send a properly formatted HTML response
+  res.setHeader('Content-Type', 'text/html');
   res.send(`
     <!DOCTYPE html>
     <html>
     <head>
+      <title>Spotify Authentication</title>
       <style>
         body {
-          font-family: Arial, sans-serif;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          max-width: 600px;
+          margin: 40px auto;
           padding: 20px;
           text-align: center;
           background: #f5f5f5;
@@ -22,42 +27,56 @@ app.get('/callback', (req, res) => {
           border-radius: 8px;
           margin: 20px 0;
           border: 1px solid #ddd;
-        }
-        .code {
-          font-family: monospace;
           word-break: break-all;
+        }
+        .copy-button {
+          background: #1DB954;
+          color: white;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 20px;
+          cursor: pointer;
+          font-weight: bold;
+        }
+        .copy-button:hover {
+          background: #1ed760;
         }
       </style>
     </head>
     <body>
+      <h2>Authentication Successful! ✅</h2>
+      <p>Please copy this URL and paste it back in the main window:</p>
+      <div class="code-box" id="codeUrl">
+        https://auth-handler-xfgq.onrender.com/callback?code=${code}
+      </div>
+      <button class="copy-button" onclick="copyToClipboard()">
+        Copy to Clipboard
+      </button>
+
       <script>
+        function copyToClipboard() {
+          const url = document.getElementById('codeUrl').innerText;
+          navigator.clipboard.writeText(url).then(() => {
+            const button = document.querySelector('.copy-button');
+            button.textContent = 'Copied!';
+            setTimeout(() => {
+              button.textContent = 'Copy to Clipboard';
+            }, 2000);
+          });
+        }
+
+        // Still try the automatic postMessage
         try {
-          // Try to communicate with parent window
-          window.opener.postMessage({
-            type: 'SPOTIFY_AUTH',
-            code: '${code}'
-          }, '*');
-          
-          // Wait a moment before showing manual instructions
-          setTimeout(() => {
-            document.getElementById('manual-instructions').style.display = 'block';
-          }, 1000);
+          if (window.opener) {
+            window.opener.postMessage({
+              type: 'SPOTIFY_AUTH',
+              code: '${code}'
+            }, '*');
+          }
         } catch (e) {
-          console.error('Error:', e);
-          document.getElementById('manual-instructions').style.display = 'block';
+          console.error('Error posting message:', e);
         }
       </script>
-      
-      <div id="manual-instructions" style="display: none;">
-        <h3>Authentication Successful!</h3>
-        <p>Please copy this URL and paste it back in the main window:</p>
-        <div class="code-box">
-          <code class="code">https://auth-handler-xfgq.onrender.com/callback?code=${code}</code>
-        </div>
-        <button onclick="navigator.clipboard.writeText('https://auth-handler-xfgq.onrender.com/callback?code=${code}')">
-          Copy to Clipboard
-        </button>
-      </div>
     </body>
     </html>
   `);
